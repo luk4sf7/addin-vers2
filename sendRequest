@@ -1,0 +1,118 @@
+// SendRequest.js
+// Node ≥18
+const BASE_URL = process.env.AISSOCIATE_BASE_URL ?? 'https://aissociate.at';
+const API_KEY  = process.env.AISSOCIATE_API_KEY ?? 'ck:4ea46438-b20e-438d-8127-55cd026e794b:c4207d7b-6885-432c-85b5-9ba938410992';
+
+// ---- CLI ARGS ----
+// Usage: node SendRequest.js "<question>" "<law>" "<scope?>"
+const [, , questionArg, lawArg, scopeArg] = process.argv;
+const QUESTION   = questionArg || 'Wann haftet der Geschäftsführer einer GmbH?';
+const LEGAL_AREA = lawArg     || null;  // e.g. "zivilrechtogh"
+const SCOPE      = scopeArg   || null;  // optional, e.g. "AT"
+
+if (!API_KEY) {
+  console.error('❌  Set AISSOCIATE_API_KEY in your environment.');
+  process.exit(1);
+}
+
+/**
+ * Parse a single SSE block (delimited by blank lines).
+ */
+function parseSSEBlock(block) {
+  const lines = block.split(/\r?\n/);
+  let id = null;
+  let event = null;
+  let dataStr = '';
+
+  for (const line of lines) {
+    if (line.startsWith('id:')) {
+      id = line.slice(3).trim();
+    } else if (line.startsWith('event:')) {
+      event = line.slice(6).trim();
+    } else if (line.startsWith('data:')) {
+      dataStr += (dataStr ? '\n' : '') + line.slice(5).trim();
+    }
+  }
+
+  if (!dataStr) return null;
+
+  try {
+    return { id, event, data: JSON.parse(dataStr) };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Streams an “ask” request. Prints raw blocks and final merged message.
+ */
+async function ask(question, { legalArea = null, scope = null, files = [] } = {}) {
+  const endpoint = `${BASE_URL}/api/public/v1/chat/ask`;
+  const payload  = {
+    question,
+    law:      legalArea,
+    sub_law:  scope,
+    file_context: files,
+    file_query_type: 'general',
+  };
+
+  const res = await fetch(endpoint, {
+    method:  'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok || !res.body) {
+    console.error(`❌  Request failed (${res.status})`, await res.text());
+    return;
+  }
+
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer    = '';
+  let fullText  = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Split by blank line delimiter (end of an SSE event block)
+    const parts = buffer.split(/\r?\n\r?\n/);
+    buffer = parts.pop(); // incomplete remainder
+
+    for (const rawBlock of parts) {
+      if (!rawBlock.trim()) continue;
+
+      // Debug print
+      console.log('--- Raw Event Block ---\n' + rawBlock + '\n------------------------');
+
+      const parsed = parseSSEBlock(rawBlock);
+      if (!parsed) {
+        console.warn('⚠️  Could not parse block as JSON event:', rawBlock);
+        continue;
+      }
+
+      const { data } = parsed;
+
+      if (data.type === 'ERROR') {
+        console.error('⚠️  API error:', data.text);
+        continue;
+      }
+
+      if (data.type === 'message' && typeof data.text === 'string') {
+        fullText += data.text;
+      }
+    }
+  }
+
+  console.log('\n=== FULL MESSAGE ===\n' + fullText.trim() + '\n====================');
+}
+
+// Run
+ask(QUESTION, { legalArea: LEGAL_AREA, scope: SCOPE })
+  .catch(err => console.error('❌  Unexpected error:', err));
