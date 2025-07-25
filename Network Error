@@ -1,0 +1,36 @@
+Error: Netzwerkfehler: „Failed to fetch“.
+Ursachen können sein:
+- CORS blockiert (API sendet keinen Access-Control-Allow-Origin Header)
+- Domain nicht in AppDomains in der Office-Manifest-Datei
+- HTTPS/SSL-Problem (Zertifikat nicht vertraut)
+- Falsche URL/Endpoint
+- Firmen-Firewall/Proxy blockiert
+
+Prüfe die Browser-Netzwerk-Konsole (DevTools → Network) & die Manifest-Datei.
+    at _callee2$ (:178:19)
+    at s (:5:1678)
+    at Generator.<anonymous> (:5:1379)
+    at Generator.throw (:5:2199)
+    at asyncGeneratorStep (:6:70)
+    at _throw (https://localhost:3000/1e8eecf74249b16c5774.js:7:241) {stack: 'Error: Netzwerkfehler: „Failed to fetch“.
+Urs…localhost:3000/1e8eecf74249b16c5774.js:7:241)', message: 'Netzwerkfehler: „Failed to fetch“.
+Ursachen …e (DevTools → Network) & die Manifest-Datei.'}
+
+1e8eecf74249b16c5774.js:73
+Error: Netzwerkfehler: „Failed to fetch“.
+Ursachen können sein:
+- CORS blockiert (API sendet keinen Access-Control-Allow-Origin Header)
+- Domain nicht in AppDomains in der Office-Manifest-Datei
+- HTTPS/SSL-Problem (Zertifikat nicht vertraut)
+- Falsche URL/Endpoint
+- Firmen-Firewall/Proxy blockiert
+
+Prüfe die Browser-Netzwerk-Konsole (DevTools → Network) & die Manifest-Datei.
+    at _callee2$ (:374:19)
+    at s (:201:1678)
+    at Generator.<anonymous> (:201:1379)
+    at Generator.throw (:201:2199)
+    at asyncGeneratorStep (:202:70)
+    at _throw (https://localhost:3000/taskpane.js:203:241) {stack: 'Error: Netzwerkfehler: „Failed to fetch“.
+Urs… (https://localhost:3000/taskpane.js:203:241)', message: 'Netzwerkfehler: „Failed to fetch“.
+Ursachen …e (DevTools → Network) & die Manifest-Datei.'}
